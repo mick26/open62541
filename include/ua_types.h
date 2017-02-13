@@ -196,6 +196,8 @@ UA_STRING(char *chars) {
 #define UA_STRING_ALLOC(CHARS) UA_String_fromChars(CHARS)
 
 /**
+ * .. _datetime:
+ *
  * DateTime
  * ^^^^^^^^
  * An instance in time. A DateTime value is encoded as a 64-bit signed integer

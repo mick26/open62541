@@ -32,6 +32,20 @@ add_executable(server_firststeps tutorials/server_firststeps.c $<TARGET_OBJECTS:
 add_dependencies(server_firststeps open625451_amalgamation)
 target_link_libraries(server_firststeps ${LIBS})
 
+add_executable(server_variable tutorials/server_variable.c $<TARGET_OBJECTS:open62541-object>)
+add_dependencies(server_variable open625451_amalgamation)
+target_link_libraries(server_variable ${LIBS})
+
+add_executable(server_datasource tutorials/server_datasource.c $<TARGET_OBJECTS:open62541-object>)
+add_dependencies(server_datasource open625451_amalgamation)
+target_link_libraries(server_datasource ${LIBS})
+
+if(UA_ENABLE_METHODCALLS)
+  add_executable(server_method tutorials/server_method.c $<TARGET_OBJECTS:open62541-object>)
+  add_dependencies(server_method open625451_amalgamation)
+  target_link_libraries(server_method ${LIBS})
+endif()
+
 if(UA_ENABLE_NONSTANDARD_UDP)
   add_executable(server_udp server_udp.c $<TARGET_OBJECTS:open62541-object> ${PROJECT_SOURCE_DIR}/plugins/ua_network_udp.c)
   target_link_libraries(server_udp ${LIBS})
@@ -52,14 +66,8 @@ target_link_libraries(client_firststeps ${LIBS})
 # Feature Examples #
 ####################
 
-add_executable(server_variable server_variable.c $<TARGET_OBJECTS:open62541-object>)
-target_link_libraries(server_variable ${LIBS})
-
 add_executable(server_mainloop server_mainloop.c $<TARGET_OBJECTS:open62541-object>)
 target_link_libraries(server_mainloop ${LIBS})
-
-add_executable(server_datasource server_datasource.c $<TARGET_OBJECTS:open62541-object>)
-target_link_libraries(server_datasource ${LIBS})
 
 add_executable(server_instantiation server_instantiation.c $<TARGET_OBJECTS:open62541-object>)
 target_link_libraries(server_instantiation ${LIBS})
@@ -74,11 +82,6 @@ if(UA_BUILD_EXAMPLES_NODESET_COMPILER)
   add_executable(server_nodeset server_nodeset.c ${PROJECT_BINARY_DIR}/src_generated/nodeset.c $<TARGET_OBJECTS:open62541-object>)
   target_link_libraries(server_nodeset ${LIBS})
   target_include_directories(server_nodeset PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/deps) # needs an internal header
-endif()
-
-if(UA_ENABLE_METHODCALLS)
-  add_executable(server_method server_method.c $<TARGET_OBJECTS:open62541-object>)
-  target_link_libraries(server_method ${LIBS})
 endif()
 
 if(UA_BUILD_SELFSIGNED_CERTIFICATE)

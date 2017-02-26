@@ -236,7 +236,8 @@ defineObjectTypes(UA_Server *server) {
  * object type. The resulting object contains all four inherited child
  * variables. The object has a reference of type ``hasTypeDefinition`` to the
  * object type. Clients can browse this information at runtime and adjust
- * accordingly. */
+ * accordingly.
+ */
 
 static void
 addPumpObjectInstance(UA_Server *server, char *name) {
@@ -250,6 +251,29 @@ addPumpObjectInstance(UA_Server *server, char *name) {
                             pumpTypeId, /* this refers to the object type
                                            identifier */
                             oAttr, NULL, NULL);
+}
+
+/**
+ * Often times, we want to run a constructor function on a new object. This is
+ * especially useful when an object is instantiated at runtime (with the
+ * AddNodes service) and the integration with an underlying process canot be
+ * manually defined. In the following constructor example, we simply set the
+ * pump status to on.
+ */
+
+static void *
+pumpTypeConstructor(const UA_NodeId instance) {
+    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "New pump created");
+    /* Find the NodeId of the status child variable */
+    return NULL; /* The return pointer is attached to the ObjectNode. */
+}
+
+static void
+addPumpTypeConstructor(UA_Server *server) {
+    UA_ObjectLifecycleManagement olm;
+    olm.constructor = pumpTypeConstructor;
+    olm.destructor = NULL;
+    UA_Server_setObjectTypeNode_lifecycleManagement(server, pumpTypeId, olm);
 }
 
 /** It follows the main server code, making use of the above definitions. */
@@ -275,6 +299,9 @@ int main(void) {
     defineObjectTypes(server);
     addPumpObjectInstance(server, "pump2");
     addPumpObjectInstance(server, "pump3");
+    addPumpTypeConstructor(server);
+    addPumpObjectInstance(server, "pump4");
+    addPumpObjectInstance(server, "pump5");
 
     UA_Server_run(server, &running);
     UA_Server_delete(server);

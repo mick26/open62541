@@ -40,6 +40,10 @@ add_executable(server_datasource tutorials/server_datasource.c $<TARGET_OBJECTS:
 add_dependencies(server_datasource open625451_amalgamation)
 target_link_libraries(server_datasource ${LIBS})
 
+add_executable(server_object tutorials/server_object.c $<TARGET_OBJECTS:open62541-object>)
+add_dependencies(server_object open625451_amalgamation)
+target_link_libraries(server_object ${LIBS})
+
 if(UA_ENABLE_METHODCALLS)
   add_executable(server_method tutorials/server_method.c $<TARGET_OBJECTS:open62541-object>)
   add_dependencies(server_method open625451_amalgamation)

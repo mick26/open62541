@@ -2,194 +2,282 @@
  * See http://creativecommons.org/publicdomain/zero/1.0/ for more information. */
 
 /**
- * Working with Objects and Methods
- * --------------------------------
+ * Working with Objects and Object types
+ * -------------------------------------
  *
- * This tutorial demonstrates how to add method nodes to the server. Use an UA
- * client, e.g., UaExpert to call the method (right-click on the method node ->
- * call).
+ * Objects are a way to structure information models. In addition, ObjectTypes
+ * provide 
  *
- * The first example shows how to define input and output arguments (lines 72 -
- * 88), make the method executable (lines 94,95), add the method node (line
- * 96-101) with a specified method callback (lines 10 - 24).
+ * In this tutorial, we 
+ * First, we define the 
  *
- * The second example shows that a method can also be applied on an array as
- * input argument and output argument.
+ * Using objects to structure information models
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  *
- * The last example presents a way to bind a new method callback to an already
- * instantiated method node. */
+ * Assume a situation where we want to model a set of pumps and their runtime
+ * state in an OPC UA information model. Of course, all pump representations
+ * should follow the same basic structure, For example, we might have graphical
+ * representation of pumps in a SCADA visualisation that shall be resuable for
+ * all pumps.
+ *
+ * Following the object-oriented programming paradigm, every pump is represented
+ * by an object with the following layout:
+ *
+ * .. graphviz::
+ *
+ *    digraph tree {
+ *
+ *    fixedsize=true;
+ *    node [width=2, height=0, shape=box, fillcolor="#E5E5E5", concentrate=true]
+ *
+ *    node_root [label=< <I>ObjectNode</I><BR/>Pump >]
+ *
+ *    { rank=same
+ *      point_1 [shape=point]
+ *      node_1 [label=< <I>VariableNode</I><BR/>ManufacturerName >] }
+ *    node_root -> point_1 [arrowhead=none]
+ *    point_1 -> node_1 [label="hasComponent"]
+ *
+ *    { rank=same
+ *      point_2 [shape=point]
+ *      node_2 [label=< <I>VariableNode</I><BR/>ModelName >] }
+ *    point_1 -> point_2 [arrowhead=none]
+ *    point_2 -> node_2 [label="hasComponent"]
+ *
+ *    {  rank=same
+ *       point_4 [shape=point]
+ *       node_4 [label=< <I>VariableNode</I><BR/>Status >] }
+ *    point_2 -> point_4 [arrowhead=none]
+ *    point_4 -> node_4 [label="hasComponent"]
+ *
+ *    {  rank=same
+ *       point_5 [shape=point]
+ *       node_5 [label=< <I>VariableNode</I><BR/>MotorRPM >] }
+ *    point_4 -> point_5 [arrowhead=none]
+ *    point_5 -> node_5 [label="hasComponent"]
+ *
+ *    }
+ *
+ * The following code manually defines a pump and its member variables. We omit
+ * setting constraints on the variable values as this is not the focus of this
+ * tutorial and was already covered. */
 
 #include <signal.h>
-#include <stdlib.h>
 #include "open62541.h"
 
-/* Example 1 */
-static UA_StatusCode
-helloWorldMethod(void *handle, const UA_NodeId objectId,
-                 size_t inputSize, const UA_Variant *input,
-                 size_t outputSize, UA_Variant *output) {
-    UA_String *inputStr = (UA_String*)input->data;
-    UA_String tmp = UA_STRING_ALLOC("Hello ");
-    if(inputStr->length > 0) {
-        tmp.data = realloc(tmp.data, tmp.length + inputStr->length);
-        memcpy(&tmp.data[tmp.length], inputStr->data, inputStr->length);
-        tmp.length += inputStr->length;
-    }
-    UA_Variant_setScalarCopy(output, &tmp, &UA_TYPES[UA_TYPES_STRING]);
-    UA_String_deleteMembers(&tmp);
-    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Hello World was called");
-    return UA_STATUSCODE_GOOD;
+static void
+manuallyDefinePump(UA_Server *server) {
+    UA_NodeId pumpId; /* get the nodeid assigned by the server */
+    UA_ObjectAttributes oAttr;
+    UA_ObjectAttributes_init(&oAttr);
+    oAttr.displayName = UA_LOCALIZEDTEXT("en_US", "Pump (Manual)");
+    UA_Server_addObjectNode(server, UA_NODEID_NULL,
+                            UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER),
+                            UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES),
+                            UA_QUALIFIEDNAME(1, "Pump (Manual)"), UA_NODEID_NULL,
+                            oAttr, NULL, &pumpId);
+
+    UA_VariableAttributes mnAttr;
+    UA_VariableAttributes_init(&mnAttr);
+    UA_String manufacturerName = UA_STRING("Pump King Ltd.");
+    UA_Variant_setScalar(&mnAttr.value, &manufacturerName, &UA_TYPES[UA_TYPES_STRING]);
+    mnAttr.displayName = UA_LOCALIZEDTEXT("en_US", "ManufacturerName");
+    UA_Server_addVariableNode(server, UA_NODEID_NULL, pumpId,
+                              UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                              UA_QUALIFIEDNAME(1, "ManufacturerName"),
+                              UA_NODEID_NULL, mnAttr, NULL, NULL);
+
+    UA_VariableAttributes modelAttr;
+    UA_VariableAttributes_init(&modelAttr);
+    UA_String modelName = UA_STRING("Mega Pump 3000");
+    UA_Variant_setScalar(&modelAttr.value, &modelName, &UA_TYPES[UA_TYPES_STRING]);
+    modelAttr.displayName = UA_LOCALIZEDTEXT("en_US", "ModelName");
+    UA_Server_addVariableNode(server, UA_NODEID_NULL, pumpId,
+                              UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                              UA_QUALIFIEDNAME(1, "ModelName"),
+                              UA_NODEID_NULL, modelAttr, NULL, NULL);
+
+    UA_VariableAttributes statusAttr;
+    UA_VariableAttributes_init(&statusAttr);
+    UA_Boolean status = true;
+    UA_Variant_setScalar(&statusAttr.value, &status, &UA_TYPES[UA_TYPES_BOOLEAN]);
+    statusAttr.displayName = UA_LOCALIZEDTEXT("en_US", "Status");
+    UA_Server_addVariableNode(server, UA_NODEID_NULL, pumpId,
+                              UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                              UA_QUALIFIEDNAME(1, "Status"),
+                              UA_NODEID_NULL, statusAttr, NULL, NULL);
+
+    UA_VariableAttributes rpmAttr;
+    UA_VariableAttributes_init(&rpmAttr);
+    UA_Double rpm = 50.0;
+    UA_Variant_setScalar(&rpmAttr.value, &rpm, &UA_TYPES[UA_TYPES_DOUBLE]);
+    rpmAttr.displayName = UA_LOCALIZEDTEXT("en_US", "MotorRPM");
+    UA_Server_addVariableNode(server, UA_NODEID_NULL, pumpId,
+                              UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                              UA_QUALIFIEDNAME(1, "MotorRPMs"),
+                              UA_NODEID_NULL, rpmAttr, NULL, NULL);
 }
 
-/* Example 2 */
-static UA_StatusCode
-IncInt32ArrayValuesMethod(void *handle, const UA_NodeId objectId,
-                          size_t inputSize, const UA_Variant *input,
-                          size_t outputSize, UA_Variant *output) {
-    UA_Variant_setArrayCopy(output, input->data, 5, &UA_TYPES[UA_TYPES_INT32]);
-    for(size_t i = 0; i< input->arrayLength; i++)
-        ((UA_Int32*)output->data)[i] = ((UA_Int32*)input->data)[i] + 1;
-    return UA_STATUSCODE_GOOD;
+/**
+ * Object types, type hierarchies and instantiation
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ *
+ * Building up each object manually requires us to write a lot of code.
+ * Furthermore, there is no way for clients to detect that an object represents
+ * a pump. (We might use naming conventions or similar to detect pumps. But
+ * that's not exactly a clean solution.) Furthermore, we might have more devices
+ * than just pumps. And we require all devices to share some common structure.
+ * The solution is to define ObjectTypes in a hierarchy with inheritance
+ * relations.
+ *
+ * .. graphviz::
+ *
+ *    digraph tree {
+ *
+ *    fixedsize=true;
+ *    node [width=2, height=0, shape=box, fillcolor="#E5E5E5", concentrate=true]
+ *
+ *    node_root [label=< <I>ObjectTypeNode</I><BR/>Device >]
+ *
+ *    { rank=same
+ *      point_1 [shape=point]
+ *      node_1 [label=< <I>VariableNode</I><BR/>ManufacturerName >] }
+ *    node_root -> point_1 [arrowhead=none]
+ *    point_1 -> node_1 [label="hasComponent"]
+ *
+ *    { rank=same
+ *      point_2 [shape=point]
+ *      node_2 [label=< <I>VariableNode</I><BR/>ModelName >] }
+ *    point_1 -> point_2 [arrowhead=none]
+ *    point_2 -> node_2 [label="hasComponent"]
+ *
+ *    {  rank=same
+ *       point_3 [shape=point]
+ *       node_3 [label=< <I>ObjectTypeNode</I><BR/>Pump >] }
+ *    point_2 -> point_3 [arrowhead=none]
+ *    point_3 -> node_3 [label="hasSubtype"]
+ *
+ *    {  rank=same
+ *       point_4 [shape=point]
+ *       node_4 [label=< <I>VariableNode</I><BR/>Status >] }
+ *    node_3 -> point_4 [arrowhead=none]
+ *    point_4 -> node_4 [label="hasComponent"]
+ *
+ *    {  rank=same
+ *       point_5 [shape=point]
+ *       node_5 [label=< <I>VariableNode</I><BR/>MotorRPM >] }
+ *    point_4 -> point_5 [arrowhead=none]
+ *    point_5 -> node_5 [label="hasComponent"]
+ *
+ *    }
+ *
+ */
+
+/* predefined identifier for later use */
+UA_NodeId pumpTypeId = {1, UA_NODEIDTYPE_NUMERIC, {1001}};
+
+static void
+defineObjectTypes(UA_Server *server) {
+    /* Define the object type for "Device" */
+    UA_NodeId deviceTypeId; /* get the nodeid assigned by the server */
+    UA_ObjectTypeAttributes dtAttr;
+    UA_ObjectTypeAttributes_init(&dtAttr);
+    dtAttr.displayName = UA_LOCALIZEDTEXT("en_US", "DeviceType");
+    UA_Server_addObjectTypeNode(server, UA_NODEID_NULL,
+                                UA_NODEID_NUMERIC(0, UA_NS0ID_BASEOBJECTTYPE),
+                                UA_NODEID_NUMERIC(0, UA_NS0ID_HASSUBTYPE),
+                                UA_QUALIFIEDNAME(1, "DeviceType"), dtAttr,
+                                NULL, &deviceTypeId);
+
+    UA_VariableAttributes mnAttr;
+    UA_VariableAttributes_init(&mnAttr);
+    mnAttr.displayName = UA_LOCALIZEDTEXT("en_US", "ManufacturerName");
+    UA_Server_addVariableNode(server, UA_NODEID_NULL, deviceTypeId,
+                              UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                              UA_QUALIFIEDNAME(1, "ManufacturerName"),
+                              UA_NODEID_NULL, mnAttr, NULL, NULL);
+
+    UA_VariableAttributes modelAttr;
+    UA_VariableAttributes_init(&modelAttr);
+    modelAttr.displayName = UA_LOCALIZEDTEXT("en_US", "ModelName");
+    UA_Server_addVariableNode(server, UA_NODEID_NULL, deviceTypeId,
+                              UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                              UA_QUALIFIEDNAME(1, "ModelName"),
+                              UA_NODEID_NULL, modelAttr, NULL, NULL);
+
+    /* Define the object type for "Pump" */
+    UA_ObjectTypeAttributes ptAttr;
+    UA_ObjectTypeAttributes_init(&ptAttr);
+    ptAttr.displayName = UA_LOCALIZEDTEXT("en_US", "PumpType");
+    UA_Server_addObjectTypeNode(server, pumpTypeId,
+                                deviceTypeId, UA_NODEID_NUMERIC(0, UA_NS0ID_HASSUBTYPE),
+                                UA_QUALIFIEDNAME(1, "PumpType"), ptAttr,
+                                NULL, NULL);
+
+    UA_VariableAttributes statusAttr;
+    UA_VariableAttributes_init(&statusAttr);
+    statusAttr.displayName = UA_LOCALIZEDTEXT("en_US", "Status");
+    UA_Server_addVariableNode(server, UA_NODEID_NULL, pumpTypeId,
+                              UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                              UA_QUALIFIEDNAME(1, "Status"),
+                              UA_NODEID_NULL, statusAttr, NULL, NULL);
+
+    UA_VariableAttributes rpmAttr;
+    UA_VariableAttributes_init(&rpmAttr);
+    rpmAttr.displayName = UA_LOCALIZEDTEXT("en_US", "MotorRPM");
+    UA_Server_addVariableNode(server, UA_NODEID_NULL, pumpTypeId,
+                              UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                              UA_QUALIFIEDNAME(1, "MotorRPMs"),
+                              UA_NODEID_NULL, rpmAttr, NULL, NULL);
 }
 
+/**
+ * Now we add the derived ObjectType for the pump that inherits from the device
+ * object type. The resulting object contains all four inherited child
+ * variables. The object has a reference of type ``hasTypeDefinition`` to the
+ * object type. Clients can browse this information at runtime and adjust
+ * accordingly. */
 
-/* Example 3 */
-static UA_StatusCode
-fooBarMethod(void *handle, const UA_NodeId objectId,
-             size_t inputSize, const UA_Variant *input,
-             size_t outputSize, UA_Variant *output) {
-    /* the same as helloWorld, but returns foobar */
-    UA_String *inputStr = (UA_String*)input->data;
-    UA_String tmp = UA_STRING_ALLOC("FooBar! ");
-    if(inputStr->length > 0) {
-        tmp.data = realloc(tmp.data, tmp.length + inputStr->length);
-        memcpy(&tmp.data[tmp.length], inputStr->data, inputStr->length);
-        tmp.length += inputStr->length;
-    }
-    UA_Variant_setScalarCopy(output, &tmp, &UA_TYPES[UA_TYPES_STRING]);
-    UA_String_deleteMembers(&tmp);
-    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "FooBar was called");
-    return UA_STATUSCODE_GOOD;
+static void
+addPumpObjectInstance(UA_Server *server, char *name) {
+    UA_ObjectAttributes oAttr;
+    UA_ObjectAttributes_init(&oAttr);
+    oAttr.displayName = UA_LOCALIZEDTEXT("en_US", name);
+    UA_Server_addObjectNode(server, UA_NODEID_NULL,
+                            UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER),
+                            UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES),
+                            UA_QUALIFIEDNAME(1, name),
+                            pumpTypeId, /* this refers to the object type
+                                           identifier */
+                            oAttr, NULL, NULL);
 }
+
+/** It follows the main server code, making use of the above definitions. */
 
 UA_Boolean running = true;
 static void stopHandler(int sign) {
     UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "received ctrl-c");
-    running = 0;
+    running = false;
 }
 
 int main(void) {
     signal(SIGINT, stopHandler);
     signal(SIGTERM, stopHandler);
 
-    /* initialize the server */
     UA_ServerConfig config = UA_ServerConfig_standard;
-    UA_ServerNetworkLayer nl;
-    nl = UA_ServerNetworkLayerTCP(UA_ConnectionConfig_standard, 16664);
+    UA_ServerNetworkLayer nl =
+        UA_ServerNetworkLayerTCP(UA_ConnectionConfig_standard, 16664);
     config.networkLayers = &nl;
     config.networkLayersSize = 1;
     UA_Server *server = UA_Server_new(config);
 
-    /* Example 1 */
-    /* add the method node with the callback */
-    UA_Argument inputArguments1;
-    UA_Argument_init(&inputArguments1);
-    inputArguments1.arrayDimensionsSize = 0;
-    inputArguments1.arrayDimensions = NULL;
-    inputArguments1.dataType = UA_TYPES[UA_TYPES_STRING].typeId;
-    inputArguments1.description = UA_LOCALIZEDTEXT("en_US", "A String");
-    inputArguments1.name = UA_STRING("MyInput");
-    inputArguments1.valueRank = -1;
+    manuallyDefinePump(server);
+    defineObjectTypes(server);
+    addPumpObjectInstance(server, "pump2");
+    addPumpObjectInstance(server, "pump3");
 
-    UA_Argument outputArguments1;
-    UA_Argument_init(&outputArguments1);
-    outputArguments1.arrayDimensionsSize = 0;
-    outputArguments1.arrayDimensions = NULL;
-    outputArguments1.dataType = UA_TYPES[UA_TYPES_STRING].typeId;
-    outputArguments1.description = UA_LOCALIZEDTEXT("en_US", "A String");
-    outputArguments1.name = UA_STRING("MyOutput");
-    outputArguments1.valueRank = -1;
-
-    UA_MethodAttributes helloAttr;
-    UA_MethodAttributes_init(&helloAttr);
-    helloAttr.description = UA_LOCALIZEDTEXT("en_US","Say `Hello World`");
-    helloAttr.displayName = UA_LOCALIZEDTEXT("en_US","Hello World");
-    helloAttr.executable = true;
-    helloAttr.userExecutable = true;
-    UA_Server_addMethodNode(server, UA_NODEID_NUMERIC(1,62541),
-                            UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER),
-                            UA_NODEID_NUMERIC(0, UA_NS0ID_HASORDEREDCOMPONENT),
-                            UA_QUALIFIEDNAME(1, "hello world"),
-                            helloAttr, &helloWorldMethod, NULL,
-                            1, &inputArguments1, 1, &outputArguments1, NULL);
-
-    /* Example 2 */
-    /* add another method node: output argument as 1d Int32 array*/
-    UA_Argument inputArguments2;
-    UA_Argument_init(&inputArguments2);
-    inputArguments2.arrayDimensionsSize = 1;
-    UA_UInt32 * pInputDimensions = UA_UInt32_new();
-    pInputDimensions[0] = 5;
-    inputArguments2.arrayDimensions = pInputDimensions;
-    inputArguments2.dataType = UA_TYPES[UA_TYPES_INT32].typeId;
-    inputArguments2.description = UA_LOCALIZEDTEXT("en_US",
-                    "input an array with 5 elements, type int32");
-    inputArguments2.name = UA_STRING("int32 value");
-    inputArguments2.valueRank = 1;
-
-    UA_Argument outputArguments2;
-    UA_Argument_init(&outputArguments2);
-    outputArguments2.arrayDimensionsSize = 1;
-    UA_UInt32 * pOutputDimensions = UA_UInt32_new();
-    pOutputDimensions[0] = 5;
-    outputArguments2.arrayDimensions = pOutputDimensions;
-    outputArguments2.dataType = UA_TYPES[UA_TYPES_INT32].typeId;
-    outputArguments2.description = UA_LOCALIZEDTEXT("en_US",
-                                                    "increment each array index");
-    outputArguments2.name = UA_STRING("output is the array, "
-                                      "each index is incremented by one");
-    outputArguments2.valueRank = 1;
-
-    UA_MethodAttributes incAttr;
-    UA_MethodAttributes_init(&incAttr);
-    incAttr.description = UA_LOCALIZEDTEXT("en_US", "1dArrayExample");
-    incAttr.displayName = UA_LOCALIZEDTEXT("en_US", "1dArrayExample");
-    incAttr.executable = true;
-    incAttr.userExecutable = true;
-    UA_Server_addMethodNode(server, UA_NODEID_STRING(1, "IncInt32ArrayValues"),
-                            UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER),
-                            UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
-                            UA_QUALIFIEDNAME(1, "IncInt32ArrayValues"),
-                            incAttr, &IncInt32ArrayValuesMethod, NULL,
-                            1, &inputArguments2, 1, &outputArguments2, NULL);
-
-    /* Example 3 */
-    UA_MethodAttributes method3Attr;
-    UA_MethodAttributes_init(&method3Attr);
-    method3Attr.description = UA_LOCALIZEDTEXT("en_US", "FooBar");
-    method3Attr.displayName = UA_LOCALIZEDTEXT("en_US", "FooBar");
-    method3Attr.executable = true;
-    method3Attr.userExecutable = true;
-    UA_Server_addMethodNode(server, UA_NODEID_STRING(1, "FooBar"),
-                            UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER),
-                            UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
-                            UA_QUALIFIEDNAME(1, "FooBar"),
-                            method3Attr, NULL, NULL,
-                            1, &inputArguments1, 1, &outputArguments1, NULL);
-    /* If the method node has no callback (because it was instantiated without
-     * one) or if we just want to change it, this can be done
-     * UA_Server_setMethodNode_callback() */
-    UA_Server_setMethodNode_callback(server,  UA_NODEID_NUMERIC(1,62542),
-                                     &fooBarMethod, NULL);
-
-    /* start server */
-    UA_StatusCode retval = UA_Server_run(server, &running);
-
-    /* ctrl-c received -> clean up */
-    UA_UInt32_delete(pInputDimensions);
-    UA_UInt32_delete(pOutputDimensions);
+    UA_Server_run(server, &running);
     UA_Server_delete(server);
     nl.deleteMembers(&nl);
-
-    return (int)retval;
+    return 0;
 }

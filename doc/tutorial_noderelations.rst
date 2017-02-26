@@ -10,66 +10,7 @@ When writing an application, it is more comfortable to create information models
 
 Note that the namespace compiler you can find in the *tools* subfolder is *not* an XML transformation tool but a compiler. That means that it will create an internal representation when parsing the XML files and attempt to understand and verify the correctness of this representation in order to generate C Code.
 
-We take the following information model snippet as the starting point of the following tutorial.
-
-.. graphviz::
-
-    digraph tree {
-
-    fixedsize=true;
-    node [width=2, height=0, shape=box, fillcolor="#E5E5E5", concentrate=true]
-
-    node_root [label="<<ObjectType>>\nFieldDevice"]
-
-    { rank=same
-      point_1 [shape=point]
-      node_1 [label="<<Variable>>\nManufacturerName"] }
-    node_root -> point_1 [arrowhead=none]
-    point_1 -> node_1 [label="hasComponent"]
-
-    { rank=same
-      point_2 [shape=point]
-      node_2 [label="<<Variable>>\nModelName"] }
-    point_1 -> point_2 [arrowhead=none]
-    point_2 -> node_2 [label="hasComponent"]
-
-    {  rank=same
-       point_3 [shape=point]
-       node_3 [label="<<ObjectType>>\nPump"] }
-    point_2 -> point_3 [arrowhead=none]
-    point_3 -> node_3 [label="hasSubtype"]
-
-    {  rank=same
-       point_4 [shape=point]
-       node_4 [label="<<Variable>>\nMotorRPM"] }
-    node_3 -> point_4 [arrowhead=none]
-    point_4 -> node_4 [label="hasComponent"]
-
-    {  rank=same
-       point_5 [shape=point]
-       node_5 [label="<<Variable>>\nisOn"] }
-    point_4 -> point_5 [arrowhead=none]
-    point_5 -> node_5 [label="hasComponent"]
-
-    {  rank=same
-       point_6 [shape=point]
-       node_6 [label="<<Method>>\nstartPump"]
-       node_8 [label="<<Variable>>\nOutputArguments"] }
-    point_5 -> point_6 [arrowhead=none]
-    point_6 -> node_6 [label="hasComponent"]
-    node_6 -> node_8 [label="hasProperty"]
-
-    {  rank=same
-       point_7 [shape=point]
-       node_7 [label="<<Method>>\nstopPump"]
-       node_9 [label="<<Variable>>\nOutputArguments"] }
-    point_6 -> point_7 [arrowhead=none]
-    point_7 -> node_7 [label="hasComponent"]
-    node_7 -> node_9 [label="hasProperty"]
-
-    }
-
-This information model is represented in XML as follows:
+We take the following information model snippet as the starting point of the following tutorial:
 
 .. code-block:: xml
 

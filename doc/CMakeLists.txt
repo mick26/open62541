@@ -34,6 +34,7 @@ generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/client_firststeps.c ${DOC_
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_firststeps.c ${DOC_SRC_DIR}/tutorial_server_firststeps.rst)
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_variable.c ${DOC_SRC_DIR}/tutorial_server_variable.rst)
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_datasource.c ${DOC_SRC_DIR}/tutorial_server_datasource.rst)
+generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_object.c ${DOC_SRC_DIR}/tutorial_server_object.rst)
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_method.c ${DOC_SRC_DIR}/tutorial_server_method.rst)
 
 add_custom_target(doc_latex ${SPHINX_EXECUTABLE}
@@ -47,6 +48,7 @@ add_custom_target(doc_latex ${SPHINX_EXECUTABLE}
           ${DOC_SRC_DIR}/tutorial_server_firststeps.rst
           ${DOC_SRC_DIR}/tutorial_server_variable.rst
           ${DOC_SRC_DIR}/tutorial_server_datasource.rst
+          ${DOC_SRC_DIR}/tutorial_server_object.rst
           ${DOC_SRC_DIR}/tutorial_server_method.rst
   COMMENT "Building LaTeX sources for documentation with Sphinx")
 add_dependencies(doc_latex open62541)
@@ -70,6 +72,7 @@ add_custom_target(doc ${SPHINX_EXECUTABLE}
           ${DOC_SRC_DIR}/tutorial_server_firststeps.rst
           ${DOC_SRC_DIR}/tutorial_server_variable.rst
           ${DOC_SRC_DIR}/tutorial_server_datasource.rst
+          ${DOC_SRC_DIR}/tutorial_server_object.rst
           ${DOC_SRC_DIR}/tutorial_server_method.rst
   COMMENT "Building HTML documentation with Sphinx")
 add_dependencies(doc open62541)

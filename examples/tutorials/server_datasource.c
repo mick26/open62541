@@ -107,7 +107,7 @@ addValueCallbackToCurrentTimeVariable(UA_Server *server) {
 
 static UA_StatusCode
 readCurrentTime(void *handle, const UA_NodeId nodeid, UA_Boolean sourceTimeStamp,
-         const UA_NumericRange *range, UA_DataValue *dataValue) {
+                const UA_NumericRange *range, UA_DataValue *dataValue) {
     UA_DateTime now = UA_DateTime_now();
     UA_Variant_setScalarCopy(&dataValue->value, &now,
                              &UA_TYPES[UA_TYPES_DATETIME]);
@@ -117,7 +117,7 @@ readCurrentTime(void *handle, const UA_NodeId nodeid, UA_Boolean sourceTimeStamp
 
 static UA_StatusCode
 writeCurrentTime(void *handle, const UA_NodeId nodeid, const UA_Variant *data,
-             const UA_NumericRange *range) {
+                 const UA_NumericRange *range) {
     UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
                 "Changing the system time is not implemented");
     return UA_STATUSCODE_BADINTERNALERROR;

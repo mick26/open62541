@@ -5,15 +5,8 @@
  * Working with Objects and Object types
  * -------------------------------------
  *
- * Objects are a way to structure information models. In addition, ObjectTypes
- * provide 
- *
- * In this tutorial, we 
- * First, we define the 
- *
  * Using objects to structure information models
  * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- *
  * Assume a situation where we want to model a set of pumps and their runtime
  * state in an OPC UA information model. Of course, all pump representations
  * should follow the same basic structure, For example, we might have graphical
@@ -121,7 +114,6 @@ manuallyDefinePump(UA_Server *server) {
 /**
  * Object types, type hierarchies and instantiation
  * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- *
  * Building up each object manually requires us to write a lot of code.
  * Furthermore, there is no way for clients to detect that an object represents
  * a pump. (We might use naming conventions or similar to detect pumps. But
@@ -217,6 +209,7 @@ defineObjectTypes(UA_Server *server) {
     UA_VariableAttributes statusAttr;
     UA_VariableAttributes_init(&statusAttr);
     statusAttr.displayName = UA_LOCALIZEDTEXT("en_US", "Status");
+    statusAttr.valueRank = -1;
     UA_Server_addVariableNode(server, UA_NODEID_NULL, pumpTypeId,
                               UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
                               UA_QUALIFIEDNAME(1, "Status"),
@@ -225,6 +218,7 @@ defineObjectTypes(UA_Server *server) {
     UA_VariableAttributes rpmAttr;
     UA_VariableAttributes_init(&rpmAttr);
     rpmAttr.displayName = UA_LOCALIZEDTEXT("en_US", "MotorRPM");
+    rpmAttr.valueRank = -1;
     UA_Server_addVariableNode(server, UA_NODEID_NULL, pumpTypeId,
                               UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
                               UA_QUALIFIEDNAME(1, "MotorRPMs"),
@@ -261,11 +255,42 @@ addPumpObjectInstance(UA_Server *server, char *name) {
  * pump status to on.
  */
 
+UA_Server *s = NULL; /* required to get the server pointer into the constructor
+                        function (will change for v0.3) */
+
 static void *
 pumpTypeConstructor(const UA_NodeId instance) {
     UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "New pump created");
+
     /* Find the NodeId of the status child variable */
-    return NULL; /* The return pointer is attached to the ObjectNode. */
+    UA_RelativePathElement rpe;
+    UA_RelativePathElement_init(&rpe);
+    rpe.referenceTypeId = UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT);
+    rpe.isInverse = false;
+    rpe.includeSubtypes = false;
+    rpe.targetName = UA_QUALIFIEDNAME(1, "Status");
+    
+    UA_BrowsePath bp;
+    UA_BrowsePath_init(&bp);
+    bp.startingNode = instance;
+    bp.relativePath.elementsSize = 1;
+    bp.relativePath.elements = &rpe;
+    
+    UA_BrowsePathResult bpr =
+        UA_Server_translateBrowsePathToNodeIds(s, &bp);
+    if(bpr.statusCode != UA_STATUSCODE_GOOD ||
+       bpr.targetsSize < 1)
+        return NULL;
+
+    /* Set the status value */
+    UA_Boolean status = true;
+    UA_Variant value;
+    UA_Variant_setScalar(&value, &status, &UA_TYPES[UA_TYPES_BOOLEAN]);
+    UA_Server_writeValue(s, bpr.targets[0].targetId.nodeId, value);
+    UA_BrowsePathResult_deleteMembers(&bpr);
+
+    /* The return pointer of the constructor is attached to the ObjectNode */
+    return NULL;
 }
 
 static void
@@ -294,6 +319,7 @@ int main(void) {
     config.networkLayers = &nl;
     config.networkLayersSize = 1;
     UA_Server *server = UA_Server_new(config);
+    s = server; /* required for the constructor */
 
     manuallyDefinePump(server);
     defineObjectTypes(server);

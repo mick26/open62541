@@ -3,6 +3,7 @@ Tutorials
 
 .. toctree::
 
+   tutorial_datatypes.rst
    tutorial_server_firststeps.rst
    tutorial_server_variable.rst
    tutorial_server_datasource.rst

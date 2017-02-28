@@ -21,6 +21,9 @@ if(UA_ENABLE_MULTITHREADING)
   list(APPEND LIBS urcu-cds urcu urcu-common)
 endif(UA_ENABLE_MULTITHREADING)
 
+add_executable(datatypes tutorials/datatypes.c $<TARGET_OBJECTS:open62541-object>)
+target_link_libraries(datatypes ${LIBS})
+
 ##################
 # Example Server #
 ##################

@@ -30,12 +30,13 @@ generate_rst(${PROJECT_SOURCE_DIR}/src/server/ua_nodestore.h ${DOC_SRC_DIR}/node
 generate_rst(${PROJECT_SOURCE_DIR}/src/server/ua_nodes.h ${DOC_SRC_DIR}/information_modelling.rst)
 
 # Doc from tutorial code
-generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/client_firststeps.c ${DOC_SRC_DIR}/tutorial_client_firststeps.rst)
+generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/datatypes.c ${DOC_SRC_DIR}/tutorial_datatypes.rst)
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_firststeps.c ${DOC_SRC_DIR}/tutorial_server_firststeps.rst)
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_variable.c ${DOC_SRC_DIR}/tutorial_server_variable.rst)
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_datasource.c ${DOC_SRC_DIR}/tutorial_server_datasource.rst)
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_object.c ${DOC_SRC_DIR}/tutorial_server_object.rst)
 generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/server_method.c ${DOC_SRC_DIR}/tutorial_server_method.rst)
+generate_rst(${PROJECT_SOURCE_DIR}/examples/tutorials/client_firststeps.c ${DOC_SRC_DIR}/tutorial_client_firststeps.rst)
 
 add_custom_target(doc_latex ${SPHINX_EXECUTABLE}
   -b latex "${DOC_SRC_DIR}" "${DOC_LATEX_DIR}"
@@ -44,6 +45,7 @@ add_custom_target(doc_latex ${SPHINX_EXECUTABLE}
           ${DOC_SRC_DIR}/log.rst ${DOC_SRC_DIR}/connection.rst ${DOC_SRC_DIR}/services.rst
           ${DOC_SRC_DIR}/nodestore.rst ${DOC_SRC_DIR}/information_modelling.rst
           ${DOC_SRC_DIR}/protocol.rst
+          ${DOC_SRC_DIR}/tutorial_datatypes.rst
           ${DOC_SRC_DIR}/tutorial_client_firststeps.rst
           ${DOC_SRC_DIR}/tutorial_server_firststeps.rst
           ${DOC_SRC_DIR}/tutorial_server_variable.rst
@@ -68,6 +70,7 @@ add_custom_target(doc ${SPHINX_EXECUTABLE}
           ${DOC_SRC_DIR}/log.rst ${DOC_SRC_DIR}/connection.rst ${DOC_SRC_DIR}/services.rst
           ${DOC_SRC_DIR}/nodestore.rst ${DOC_SRC_DIR}/information_modelling.rst
           ${DOC_SRC_DIR}/protocol.rst
+          ${DOC_SRC_DIR}/tutorial_datatypes.rst
           ${DOC_SRC_DIR}/tutorial_client_firststeps.rst
           ${DOC_SRC_DIR}/tutorial_server_firststeps.rst
           ${DOC_SRC_DIR}/tutorial_server_variable.rst

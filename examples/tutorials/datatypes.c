@@ -13,7 +13,7 @@
  *
  * Basic Data Handling
  * ^^^^^^^^^^^^^^^^^^^
- * */
+ * xx */
 
 #include <assert.h>
 #include "open62541.h"
@@ -97,8 +97,7 @@ variables_nodeids(void) {
  * is used as a container type. A variant can hold any other datatype as a
  * scalar (except variant) or as an array. Array variants can additionally
  * denote the dimensionality of the data (e.g. a 2x3 matrix) in an additional
- * integer array.
- */
+ * integer array. */
 
 static void
 variables_variants(void) {

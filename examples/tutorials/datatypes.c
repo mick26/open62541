@@ -13,7 +13,8 @@
  *
  * Basic Data Handling
  * ^^^^^^^^^^^^^^^^^^^
- * xx */
+ * This section shows the basic interaction patterns for data types. Make
+ * sure to compare with the type definitions in ``ua_types.h``. */
 
 #include <assert.h>
 #include "open62541.h"
@@ -101,9 +102,29 @@ variables_nodeids(void) {
 
 static void
 variables_variants(void) {
+    /* Set a scalar value */
     UA_Variant v;
-    UA_Variant_init(&v);
+    UA_Int32 i = 42;
+    UA_Variant_setScalar(&v, &i, &UA_TYPES[UA_TYPES_INT32]);
 
+    /* Make a copy */
+    UA_Variant v2;
+    UA_Variant_copy(&v, &v2);
+    UA_Variant_deleteMembers(&v2);
+
+    /* Set an array value */
+    UA_Variant v3;
+    UA_Double d[9] = {1.0, 2.0, 3.0,
+                      4.0, 5.0, 6.0,
+                      7.0, 8.0, 9.0};
+    UA_Variant_setArrayCopy(&v3, d, 9, &UA_TYPES[UA_TYPES_DOUBLE]);
+
+    /* Set array dimensions */
+    v3.arrayDimensions = UA_Array_new(2, &UA_TYPES[UA_TYPES_UINT32]);
+    v3.arrayDimensionsSize = 2;
+    v3.arrayDimensions[0] = 3;
+    v3.arrayDimensions[1] = 3;
+    UA_Variant_deleteMembers(&v3);
 }
 
 /** It follows the main function, making use of the above definitions. */
